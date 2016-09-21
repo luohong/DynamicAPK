@@ -4,9 +4,13 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -18,6 +22,8 @@ import java.util.zip.ZipFile;
 import ctrip.android.bundle.framework.BundleCore;
 import ctrip.android.bundle.framework.BundleException;
 import ctrip.android.bundle.hotpatch.HotPatchManager;
+
+import static android.R.attr.entries;
 
 /**
  * Created by yb.wang on 15/10/28.
@@ -50,28 +56,39 @@ public class BundleBaseApplication extends Application {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            ZipFile zipFile = new ZipFile(getApplicationInfo().sourceDir);
-                            List bundleFiles = getBundleEntryNames(zipFile, BundleCore.LIB_PATH, ".so");
-                            if (bundleFiles != null && bundleFiles.size() > 0) {
-                                processLibsBundles(zipFile, bundleFiles);
-                                SharedPreferences.Editor edit = getSharedPreferences("bundlecore_configs", 0).edit();
-                                edit.putString("last_bundle_key", bundleKey);
-                                edit.commit();
-                            } else {
-                                Log.e("Error Bundle", "not found bundle in apk");
-                            }
-                            if (zipFile != null) {
-                                try {
-                                    zipFile.close();
-                                } catch (IOException e2) {
-                                    e2.printStackTrace();
-                                }
-                            }
-                            BundleCore.getInstance().run();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
+//                        try {
+//                            ZipFile zipFile = new ZipFile(getApplicationInfo().sourceDir);
+//                            List bundleFiles = getBundleEntryNames(zipFile, BundleCore.LIB_PATH, ".so");
+//                            if (bundleFiles != null && bundleFiles.size() > 0) {
+//                                processLibsBundles(zipFile, bundleFiles);
+//                                SharedPreferences.Editor edit = getSharedPreferences("bundlecore_configs", 0).edit();
+//                                edit.putString("last_bundle_key", bundleKey);
+//                                edit.commit();
+//                            } else {
+//                                Log.e("Error Bundle", "not found bundle in apk");
+//                            }
+//                            if (zipFile != null) {
+//                                try {
+//                                    zipFile.close();
+//                                } catch (IOException e2) {
+//                                    e2.printStackTrace();
+//                                }
+//                            }
+//                        } catch (IOException ex) {
+//                            ex.printStackTrace();
+//                        }
+
+                        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Remix");
+                        List bundleFiles = getBundleEntryNames(file, BundleCore.LIB_PATH, ".so");
+                        if (bundleFiles != null && bundleFiles.size() > 0) {
+                            processLibsBundles(file, bundleFiles);
+                            SharedPreferences.Editor edit = getSharedPreferences("bundlecore_configs", 0).edit();
+                            edit.putString("last_bundle_key", bundleKey);
+                            edit.commit();
+                        } else {
+                            Log.e("Error Bundle", "not found bundle in apk");
                         }
+                        BundleCore.getInstance().run();
                     }
 
                 }).start();
@@ -103,10 +120,37 @@ public class BundleBaseApplication extends Application {
         return arrayList;
     }
 
+    private List<String> getBundleEntryNames(final File file, String str, final String str2) {
+        List<String> arrayList = new ArrayList();
+        try {
+            String[] files = file.list(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return filename.endsWith(str2);
+                }
+            });
+            if (files != null && files.length > 0) {
+                for (int i = 0; i < files.length; i++) {
+                    arrayList.add(files[i]);
+                }
+            }
+        } catch (Throwable e) {
+            Log.e("getBundleEntryNames", "Exception while get bundles in assets or lib", e);
+        }
+        return arrayList;
+    }
+
     private void processLibsBundles(ZipFile zipFile, List<String> list) {
 
         for (String str : list) {
             processLibsBundle(zipFile, str);
+        }
+    }
+
+    private void processLibsBundles(File file, List<String> list) {
+
+        for (String str : list) {
+            processLibsBundle(file, str);
         }
     }
 
@@ -117,6 +161,24 @@ public class BundleBaseApplication extends Application {
         if (BundleCore.getInstance().getBundle(packageNameFromEntryName) == null) {
             try {
                 BundleCore.getInstance().installBundle(packageNameFromEntryName, zipFile.getInputStream(zipFile.getEntry(str)));
+                Log.e("Succeed install", "Succeed to install bundle " + packageNameFromEntryName);
+                return true;
+            } catch (BundleException ex) {
+                Log.e("Fail install", "Could not install bundle.", ex);
+            } catch (IOException iex) {
+                Log.e("Fail install", "Could not install bundle.", iex);
+            }
+        }
+        return false;
+    }
+
+    private boolean processLibsBundle(File file, String str) {
+
+        String packageNameFromEntryName = getPackageNameFromEntryName(str);
+
+        if (BundleCore.getInstance().getBundle(packageNameFromEntryName) == null) {
+            try {
+                BundleCore.getInstance().installBundle(packageNameFromEntryName, new FileInputStream(file.getPath() + "/" + str));
                 Log.e("Succeed install", "Succeed to install bundle " + packageNameFromEntryName);
                 return true;
             } catch (BundleException ex) {

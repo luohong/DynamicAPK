@@ -139,22 +139,22 @@ def patchKeepSpecs() {
     def clazz = this.class.classLoader.loadClass(taskClass)
     def keepSpecsField = clazz.getDeclaredField("KEEP_SPECS")
     keepSpecsField.setAccessible(true)
-    def keepSpecsMap = (Map) keepSpecsField.get(null)
-    if (keepSpecsMap.remove("activity") != null) {
-        // println "KEEP_SPECS patched: removed 'activity' root"
-    } else {
-        // println "Failed to patch KEEP_SPECS: no 'activity' root found"
-    }
-    if (keepSpecsMap.remove("service") != null) {
-        // println "KEEP_SPECS patched: removed 'service' root"
-    } else {
-        // println "Failed to patch KEEP_SPECS: no 'service' root found"
-    }
-    if (keepSpecsMap.remove("receiver") != null) {
-        // println "KEEP_SPECS patched: removed 'receiver' root"
-    } else {
-        // println "Failed to patch KEEP_SPECS: no 'receiver' root found"
-    }
+//    def keepSpecsMap = (Map) keepSpecsField.get(null)
+//    if (keepSpecsMap.remove("activity") != null) {
+//        // println "KEEP_SPECS patched: removed 'activity' root"
+//    } else {
+//        // println "Failed to patch KEEP_SPECS: no 'activity' root found"
+//    }
+//    if (keepSpecsMap.remove("service") != null) {
+//        // println "KEEP_SPECS patched: removed 'service' root"
+//    } else {
+//        // println "Failed to patch KEEP_SPECS: no 'service' root found"
+//    }
+//    if (keepSpecsMap.remove("receiver") != null) {
+//        // println "KEEP_SPECS patched: removed 'receiver' root"
+//    } else {
+//        // println "Failed to patch KEEP_SPECS: no 'receiver' root found"
+//    }
 }
 patchKeepSpecs()
 

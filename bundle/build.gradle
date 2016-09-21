@@ -1,5 +1,10 @@
 apply plugin: 'com.android.library'
-apply from: '../global_config.gradle'
+
+if (debugMode) {
+    apply from: '../global_config.gradle'
+} else {
+    apply from: '../../Remix/global_config.gradle'
+}
 version "1.0"
 android {
     defaultConfig {
